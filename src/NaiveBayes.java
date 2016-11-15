@@ -6,7 +6,9 @@ import weka.core.Instances;
 /**
  * Created by ranggarmaste on 11/13/16.
  */
-public class NaiveBayes implements Classifier{
+public class NaiveBayes implements Classifier {
+
+
     @Override
     public void buildClassifier(Instances instances) throws Exception {
 
