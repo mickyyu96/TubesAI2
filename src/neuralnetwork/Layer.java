@@ -11,8 +11,7 @@ public class Layer {
     private Layer previousLayer;
     private Layer nextLayer;
 
-    public Layer(List<Neuron> neurons, int layerNumber) {
-        this.neurons = neurons;
+    public Layer(int layerNumber) {
         this.layerNumber = layerNumber;
     }
 
@@ -46,5 +45,10 @@ public class Layer {
 
     public void setNextLayer(Layer nextLayer) {
         this.nextLayer = nextLayer;
+    }
+
+    @Override
+    public String toString() {
+        return "Layer " + layerNumber;
     }
 }

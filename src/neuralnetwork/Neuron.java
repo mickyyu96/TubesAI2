@@ -9,14 +9,19 @@ import java.util.List;
 public class Neuron {
     private int neuronNumber;
     private int value;
-    private Layer layer;
-    private List<Link> outLinks;
+    private String name;
+    private List<Link> next;
+    private List<Link> prev;
 
-    public Neuron(int neuronNumber, int value, Layer layer) {
+    public Neuron(int neuronNumber, String name) {
+        this.neuronNumber = neuronNumber;
+        this.name = name;
+    }
+
+    public Neuron(int neuronNumber, int value, String name) {
         this.neuronNumber = neuronNumber;
         this.value = value;
-        this.layer = layer;
-        this.outLinks = null;
+        this.name = name;
     }
 
     public int getNeuronNumber() {
@@ -27,12 +32,16 @@ public class Neuron {
         return value;
     }
 
-    public Layer getLayer() {
-        return layer;
+    public String getName() {
+        return name;
     }
 
-    public List<Link> getOutLinks() {
-        return outLinks;
+    public List<Link> getNext() {
+        return next;
+    }
+
+    public List<Link> getPrev() {
+        return prev;
     }
 
     public void setNeuronNumber(int neuronNumber) {
@@ -43,11 +52,20 @@ public class Neuron {
         this.value = value;
     }
 
-    public void setLayer(Layer layer) {
-        this.layer = layer;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public void setOutLinks(List<Link> outLinks) {
-        this.outLinks = outLinks;
+    public void setNext(List<Link> next) {
+        this.next = next;
+    }
+
+    public void setPrev(List<Link> prev) {
+        this.prev = prev;
+    }
+
+    @Override
+    public String toString() {
+        return "Neuron: " + name;
     }
 }
