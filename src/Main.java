@@ -15,14 +15,19 @@ public class Main {
         }
 
         ANN ann = new ANN();
-        String[] options = new String[2];
+        String[] options = new String[6];
         options[0] = "-H";
-        options[1] = "2";
+        options[1] = "2"; // no. of hidden nodes. Set to 0 if hidden layers isn't needed
+        options[2] = "-I";
+        options[3] = "10"; // max iterations/epochs
+        options[4] = "-E";
+        options[5] = "0.1"; // error threshold
         try {
             ann.setOptions(options);
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         try {
             ann.buildClassifier(data);
         } catch (Exception e) {

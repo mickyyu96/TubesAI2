@@ -15,6 +15,8 @@ public class ANN implements Classifier, CapabilitiesHandler {
     private Instances m_Instances;
     private int hiddenNodes;
     private int totalLayers;
+    private int maxIterations = 10; // default: 10
+    private double errorThreshold; // default: 0
     private List<Layer> layers;
 
     @Override
@@ -70,6 +72,34 @@ public class ANN implements Classifier, CapabilitiesHandler {
 
         // Connect neurons
         connectNeurons();
+
+        // Learning
+
+        for (int i = 0; i < maxIterations; i++) {
+            feedForward();
+            double err = checkError();
+            if (err < errorThreshold) {
+                break;
+            } else {
+                backPropagate();
+            }
+        }
+    }
+
+
+    private void feedForward() {
+        /** WRITE YOUR CODE HERE **/
+        /** Jangan lupa: bias cuma bisa diaskses dari neuron.prev **/
+    }
+
+    private double checkError() {
+        /** WRITE YOUR CODE HERE **/
+        return 0.0;
+    }
+
+    private void backPropagate() {
+        /** WRITE YOUR CODE HERE **/
+        /** Jangan lupa: bias cuma bisa diaskses dari neuron.prev **/
     }
 
     @Override
@@ -98,28 +128,46 @@ public class ANN implements Classifier, CapabilitiesHandler {
     public Enumeration<Option> listOptions() {
         Vector newVector = new Vector(1);
         newVector.addElement(new Option("\tUse 1 hidden layer and how many nodes.", "H", 1, "-H <no. of nodes>"));
+        newVector.addElement(new Option("\tSpecify the max iterations/epochs of learning.", "I", 1, "-I <no. of max iterations>"));
+        newVector.addElement(new Option("\tSpecify the error threshold of learning.", "E", 1, "-E <error threshold>"));
         return newVector.elements();
     }
 
     public String[] getOptions() {
         Vector options = new Vector();
-        if (hiddenNodes > 0) {
-            options.add("-H");
-            options.add("" + hiddenNodes);
-        }
+        options.add("-H");
+        options.add("" + hiddenNodes);
+        options.add("-I");
+        options.add("" + maxIterations);
+        options.add("-E");
+        options.add("" + errorThreshold);
         return (String[])options.toArray(new String[0]);
     }
 
     public void setOptions(String[] options) throws Exception {
         String nodes = Utils.getOption('H', options);
-        if (nodes.length() == 0) {
-
-        } else {
+        if (nodes.length() > 0) {
             int totalNodes = Integer.parseInt(nodes);
             if (totalNodes < 0) {
                 throw new Exception("Number of hidden nodes cannot be negative.");
             }
             hiddenNodes = totalNodes;
+        }
+        String iterationsString = Utils.getOption('I', options);
+        if (iterationsString.length() > 0) {
+            int iterations = Integer.parseInt(iterationsString);
+            if (iterations <= 0) {
+                throw new Exception("Number of epochs/iteration must be greater than 0");
+            }
+            maxIterations = iterations;
+        }
+        String thresholdString = Utils.getOption('E', options);
+        if (nodes.length() > 0) {
+            double threshold = Double.parseDouble(thresholdString);
+            if (threshold < 0) {
+                throw new Exception("Threshold cannot be negative.");
+            }
+            errorThreshold = threshold;
         }
     }
 

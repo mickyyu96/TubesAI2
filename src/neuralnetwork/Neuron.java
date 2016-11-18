@@ -8,7 +8,7 @@ import java.util.List;
 
 public class Neuron {
     private int neuronNumber;
-    private int value;
+    private double value;
     private String name;
     private List<Link> next;
     private List<Link> prev;
@@ -28,7 +28,7 @@ public class Neuron {
         return neuronNumber;
     }
 
-    public int getValue() {
+    public double getValue() {
         return value;
     }
 
@@ -48,7 +48,7 @@ public class Neuron {
         this.neuronNumber = neuronNumber;
     }
 
-    public void setValue(int value) {
+    public void setValue(double value) {
         this.value = value;
     }
 
