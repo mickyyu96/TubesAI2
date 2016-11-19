@@ -71,6 +71,7 @@ public class ANN implements Classifier, CapabilitiesHandler {
         layers.add(lOut);
 
         // Connect neurons
+        connectLayers();
         connectNeurons();
 
         // Learning
@@ -214,6 +215,15 @@ public class ANN implements Classifier, CapabilitiesHandler {
         return (1 / (1 + Math.pow(Math.E, (-1 * x))));
     }
 
+    private void connectLayers() {
+        for (int i = 0; i < totalLayers - 1; i++) {
+            Layer firstLayer = layers.get(i);
+            Layer secondLayer = layers.get(i + 1);
+            firstLayer.setNextLayer(secondLayer);
+            secondLayer.setPreviousLayer(firstLayer);
+        }
+    }
+    
     private void connectNeurons() {
         // Connect neurons
         for (Layer l : layers) {
