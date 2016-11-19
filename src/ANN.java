@@ -74,22 +74,61 @@ public class ANN implements Classifier, CapabilitiesHandler {
         connectNeurons();
 
         // Learning
-
-        for (int i = 0; i < maxIterations; i++) {
-            feedForward();
-            double err = checkError();
-            if (err < errorThreshold) {
-                break;
-            } else {
-                backPropagate();
-            }
-        }
+        feedForward(m_Instances.instance(0));
+//        for (int i = 0; i < maxIterations; i++) {
+//            Enumeration<Instance> enuins = m_Instances.enumerateInstances();
+//            while (enuins.hasMoreElements()) {
+//                Instance instance = enuins.nextElement();
+//                feedForward(instance);
+//                double err = checkError();
+//                if (err <= errorThreshold) {
+//                    break;
+//                } else {
+//                    backPropagate();
+//                }
+//            }
+//        }
     }
 
+    private double sumNet (Neuron neuron) {
+        double net = 0;
+        List<Link> link = neuron.getPrev();
+        for (Link l : link) {
+            net += l.getDest().getValue() * l.getWeight();
+        }
+        return net;
+    }
 
-    private void feedForward() {
-        /** WRITE YOUR CODE HERE **/
-        /** Jangan lupa: bias cuma bisa diaskses dari neuron.prev **/
+    private void feedForward(Instance instance) {
+        double net;
+        Layer layer = layers.get(0);
+
+        //assign input
+        int j = 0;
+        System.out.println("Layer 0");
+        for (int i = 0; i < instance.numAttributes(); i++) {
+            if (i != instance.classIndex()) {
+                layer.getNeurons().get(j).setValue(instance.value(i));
+                System.out.println(layer.getNeurons().get(j).getName() + " = " + layer.getNeurons().get(j).getValue());
+                j++;
+            }
+        }
+
+        if (layers.get(1) == null) {
+            System.out.println("test null");
+        }
+
+        //next layer
+        while (layer.getNextLayer() != null) {
+            System.out.println();
+            layer = layer.getNextLayer();
+            for (Neuron n : layer.getNeurons()) {
+                net = sumNet(n);
+                n.setValue(sigmoid(net));
+
+                System.out.println(n.getName() + " = " + n.getValue());
+            }
+        }
     }
 
     private double checkError() {
