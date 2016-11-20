@@ -289,29 +289,18 @@ public class ANN implements Classifier, CapabilitiesHandler {
     private void connectNeurons() {
         // Connect neurons
         for (Layer l : layers) {
-            if (l.getLayerNumber() != 0) {
-                Layer prev = layers.get(l.getLayerNumber() - 1);
-                for (Neuron n : l.getNeurons()) {
-                    List<Link> links = new ArrayList<>();
-                    // Add bias link
-                    links.add(new Link(new Neuron(-1, 1, "bias"), n, 1));
-                    for (Neuron nPrev : prev.getNeurons()) {
-                        Link link = new Link(nPrev, n, 1);
-                        links.add(link);
-                    }
-                    n.setPrev(links);
+            Layer next = l.getNextLayer();
+            if (next == null) continue;
+
+            for (Neuron n : l.getNeurons()) {
+                for (Neuron nNext : next.getNeurons()) {
+                    Link link = new Link(n, nNext, 1);
+                    n.getNext().add(link);
+                    nNext.getPrev().add(link);
                 }
             }
-            if (l.getLayerNumber() != totalLayers - 1) {
-                Layer next = layers.get(l.getLayerNumber() + 1);
-                for (Neuron n : l.getNeurons()) {
-                    List<Link> links = new ArrayList<>();
-                    for (Neuron nNext : next.getNeurons()) {
-                        Link link = new Link(n, nNext, 1);
-                        links.add(link);
-                    }
-                    n.setNext(links);
-                }
+            for (Neuron nNext : next.getNeurons()) {
+                nNext.getPrev().add(new Link(new Neuron(0, 1, "bias"), nNext, 1));
             }
         }
     }

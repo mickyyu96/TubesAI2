@@ -1,5 +1,6 @@
 package neuralnetwork;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -17,12 +18,16 @@ public class Neuron {
     public Neuron(int neuronNumber, String name) {
         this.neuronNumber = neuronNumber;
         this.name = name;
+        this.next = new ArrayList<>();
+        this.prev = new ArrayList<>();
     }
 
     public Neuron(int neuronNumber, int value, String name) {
         this.neuronNumber = neuronNumber;
         this.value = value;
         this.name = name;
+        this.next = new ArrayList<>();
+        this.prev = new ArrayList<>();
     }
 
     public int getNeuronNumber() {
