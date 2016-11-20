@@ -4,6 +4,8 @@ import neuralnetwork.Neuron;
 import weka.classifiers.Classifier;
 import weka.core.*;
 import weka.core.converters.ConverterUtils;
+import weka.filters.Filter;
+import weka.filters.unsupervised.attribute.*;
 
 import java.util.*;
 
@@ -15,6 +17,9 @@ import static java.lang.Math.abs;
 
 public class ANN implements Classifier, CapabilitiesHandler {
     private Instances m_Instances;
+    private Instances filteredInstances;
+    private Filter nomToBinFilter;
+    private Filter normalizeFilter;
     private int hiddenNodes;
     private int totalLayers;
     private int maxIterations = 10; // default: 10
@@ -28,7 +33,35 @@ public class ANN implements Classifier, CapabilitiesHandler {
         layers = new ArrayList<>();
         totalLayers = hiddenNodes == 0 ? 2 : 3;
 
-        // Filter nominal to numeric: til' next time
+        // Filter normalize
+        Normalize normalize = new Normalize();
+        try {
+            normalize.setInputFormat(instances);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        normalizeFilter = normalize;
+
+        try {
+            filteredInstances = Filter.useFilter(instances, normalize);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Filter nominal to numeric
+        NominalToBinary nomToBin = new NominalToBinary();
+        try {
+            nomToBin.setInputFormat(instances);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        nomToBinFilter = nomToBin;
+
+        try {
+            filteredInstances = Filter.useFilter(filteredInstances, nomToBin);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         // Create input layer
         int layerCount = 0;
@@ -77,13 +110,8 @@ public class ANN implements Classifier, CapabilitiesHandler {
         connectLayers();
         connectNeurons();
 
-        // Learning
-//        feedForward(m_Instances.instance(0));
-//        System.out.println(checkError(m_Instances.instance(0)));
-//        backPropagate(m_Instances.instance(0));
-//        System.out.println();
         for (int i = 0; i < maxIterations; i++) {
-            Enumeration<Instance> enuins = m_Instances.enumerateInstances();
+            Enumeration<Instance> enuins = filteredInstances.enumerateInstances();
             while (enuins.hasMoreElements()) {
                 Instance instance = enuins.nextElement();
                 feedForward(instance);
@@ -96,17 +124,24 @@ public class ANN implements Classifier, CapabilitiesHandler {
                 }
             }
         }
-
         debugPrint();
         System.out.println();
-        System.out.println(classifyInstance(m_Instances.instance(0)));
 
-//        Enumeration<Instance> enuins = m_Instances.enumerateInstances();
-//        while (enuins.hasMoreElements()) {
-//            Instance ins = enuins.nextElement();
-//            int a = (int) classifyInstance(ins);
-//            System.out.println(a);
-//        }
+        Enumeration<Instance> enuins = filteredInstances.enumerateInstances();
+        int total = 0;
+        int same = 0;
+        while (enuins.hasMoreElements()) {
+            Instance ins = enuins.nextElement();
+            int a = (int) classifyInstance(ins);
+            System.out.println(a);
+            total++;
+            if (a == (int) ins.classValue()) {
+                same++;
+            }
+        }
+        System.out.println("TOTAL INSTANCES: " + total);
+        System.out.println("CORRECTLY PREDICTED: " + same);
+        System.out.println("ACCURACY: " + (double) same / total);
     }
 
     private double sumNet (Neuron neuron) {

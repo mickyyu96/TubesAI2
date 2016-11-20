@@ -18,7 +18,7 @@ public class Main {
             e.printStackTrace();
         }
 
-        //System.out.println(data);
+        // System.out.println(data);
         /*** AWAL TEST. ENTAR HAPUS AJA ***/
         // Ambil instance
         Enumeration<Instance> enu = data.enumerateInstances();
@@ -38,7 +38,7 @@ public class Main {
         options[0] = "-H";
         options[1] = "2"; // no. of hidden nodes. Set to 0 if hidden layers isn't needed
         options[2] = "-I";
-        options[3] = "10"; // max iterations/epochs
+        options[3] = "1000"; // max iterations/epochs
         options[4] = "-E";
         options[5] = "0.1"; // error threshold
         try {
