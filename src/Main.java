@@ -1,7 +1,9 @@
+import weka.classifiers.Classifier;
 import weka.classifiers.evaluation.Evaluation;
 import weka.core.Attribute;
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.core.SerializationHelper;
 import weka.core.converters.ConverterUtils;
 
 import java.util.Enumeration;
@@ -38,9 +40,9 @@ public class Main {
         ANN ann = new ANN();
         String[] options = new String[6];
         options[0] = "-H";
-        options[1] = "1"; // no. of hidden nodes. Set to 0 if hidden layers isn't needed
+        options[1] = "0"; // no. of hidden nodes. Set to 0 if hidden layers isn't needed
         options[2] = "-I";
-        options[3] = "500"; // max iterations/epochs
+        options[3] = "1000"; // max iterations/epochs
         options[4] = "-E";
         options[5] = "0.1"; // error threshold
         try {
@@ -55,25 +57,42 @@ public class Main {
             e.printStackTrace();
         }
 
-//        // EVALUATION
-//        Evaluation eval = null;
-//        try {
-//            eval = new Evaluation(ann.getFilteredInstances());
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//        try {
-//            eval.crossValidateModel(ann, ann.getFilteredInstances(), 10, new Random(1));
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//        System.out.println("**** 10-Fold Cross Validation Evaluation ****");
-//        System.out.println(eval.toSummaryString("\nResults\n", false));;
-//        try {
-//            System.out.println(eval.toClassDetailsString());
-//            System.out.println(eval.toMatrixString());
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
+        // Save Model
+        try {
+            SerializationHelper.write("ann.model", ann);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Load Model
+        try {
+            Object obj[] = SerializationHelper.readAll("ann.model");
+            ann = (ANN) obj[0];
+            // Instances newins = (Instances) obj[1]; kayaknya ga perlu
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // EVALUATION
+        Evaluation eval = null;
+        try {
+            eval = new Evaluation(ann.getFilteredInstances());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        try {
+            eval.crossValidateModel(ann, ann.getFilteredInstances(), 10, new Random(1));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        System.out.println("**** 10-Fold Cross Validation Evaluation ****");
+        System.out.println(eval.toSummaryString("\nResults\n", false));;
+        try {
+            System.out.println(eval.toClassDetailsString());
+            System.out.println(eval.toMatrixString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        ann.debugPrint();
     }
 }

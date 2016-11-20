@@ -11,6 +11,7 @@ import weka.filters.unsupervised.attribute.*;
 import java.util.*;
 
 import static java.lang.Math.abs;
+import static java.lang.Math.sqrt;
 
 /**
  * Created by ranggarmaste on 11/13/16.
@@ -21,10 +22,11 @@ public class ANN extends AbstractClassifier implements CapabilitiesHandler {
     private Instances filteredInstances;
     private Filter nomToBinFilter;
     private Filter normalizeFilter;
+    private Filter replaceFilter;
     private int hiddenNodes;
     private int totalLayers;
     private int maxIterations = 10; // default: 10
-    private double errorThreshold = 0.0005; // default: 0
+    private double errorThreshold = 0.00005; // default: 0.00005
     private double learningRate = 0.01;
     private List<Layer> layers;
 
@@ -36,33 +38,21 @@ public class ANN extends AbstractClassifier implements CapabilitiesHandler {
 
         // Filter normalize
         Normalize normalize = new Normalize();
-        try {
-            normalize.setInputFormat(instances);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        normalize.setInputFormat(instances);
         normalizeFilter = normalize;
-
-        try {
-            filteredInstances = Filter.useFilter(instances, normalize);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        filteredInstances = Filter.useFilter(instances, normalize);
 
         // Filter nominal to numeric
         NominalToBinary nomToBin = new NominalToBinary();
-        try {
-            nomToBin.setInputFormat(filteredInstances);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        nomToBin.setInputFormat(filteredInstances);
         nomToBinFilter = nomToBin;
+        filteredInstances = Filter.useFilter(filteredInstances, nomToBin);
 
-        try {
-            filteredInstances = Filter.useFilter(filteredInstances, nomToBin);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        // Replace missing values
+        ReplaceMissingValues replaceMissing = new ReplaceMissingValues();
+        replaceMissing.setInputFormat(filteredInstances);
+        replaceFilter = replaceMissing;
+        filteredInstances = Filter.useFilter(filteredInstances, replaceMissing);
 
         // Create input layer
         int layerCount = 0;
@@ -72,7 +62,7 @@ public class ANN extends AbstractClassifier implements CapabilitiesHandler {
         Enumeration<Attribute> enu = filteredInstances.enumerateAttributes();
         while (enu.hasMoreElements()) {
             Attribute attr = enu.nextElement();
-            System.out.println(attr.name());
+            //System.out.println(attr.name());
             Neuron neuron = new Neuron(neuronCount, attr.name());
             neurons.add(neuron);
             neuronCount++;
@@ -99,35 +89,53 @@ public class ANN extends AbstractClassifier implements CapabilitiesHandler {
         neurons = new ArrayList<>();
         neuronCount = 0;
         Enumeration<Object> classVal = filteredInstances.classAttribute().enumerateValues();
+
+        // Count how many classVal?
+        int numClass = 0;
         while (classVal.hasMoreElements()) {
-            String label = (String) classVal.nextElement();
-            Neuron neuron = new Neuron(neuronCount, label);
+            classVal.nextElement();
+            numClass++;
+        }
+        classVal = filteredInstances.classAttribute().enumerateValues();
+        if (numClass > 2) {
+            while (classVal.hasMoreElements()) {
+                String label = (String) classVal.nextElement();
+                Neuron neuron = new Neuron(neuronCount, label);
+                neurons.add(neuron);
+                neuronCount++;
+            }
+        } else {
+            Neuron neuron = new Neuron(neuronCount, "class");
             neurons.add(neuron);
-            neuronCount++;
         }
         lOut.setNeurons(neurons);
         layers.add(lOut);
 
-        // Connect neurons
+        // Connect layers, neurons, and initialize weights
         connectLayers();
         connectNeurons();
+        initializeWeights();
 
         for (int i = 0; i < maxIterations; i++) {
+            System.out.println("Iteration-" + i);
             Enumeration<Instance> enuins = filteredInstances.enumerateInstances();
             while (enuins.hasMoreElements()) {
                 Instance instance = enuins.nextElement();
                 feedForward(instance);
-                double err = checkError(instance);
-                //System.out.println("error = " + err);
-                if (abs(err - errorThreshold) <= 0.00001) {
-                    break;
-                } else {
-                    backPropagate(instance);
-                }
+                checkError(instance);
+                backPropagate(instance);
+            }
+            enuins = filteredInstances.enumerateInstances();
+
+            double errorTotal = 0.0;
+            while (enuins.hasMoreElements()) {
+                Instance instance = enuins.nextElement();
+                feedForward(instance);
+                errorTotal += checkError(instance);
             }
         }
-        debugPrint();
-        System.out.println();
+        //debugPrint();
+        //System.out.println();
 
         Enumeration<Instance> enuins = filteredInstances.enumerateInstances();
         int total = 0;
@@ -135,15 +143,12 @@ public class ANN extends AbstractClassifier implements CapabilitiesHandler {
         while (enuins.hasMoreElements()) {
             Instance ins = enuins.nextElement();
             int a = (int) classifyInstance(ins);
-            System.out.println(a);
+            //System.out.println(a);
             total++;
             if (a == (int) ins.classValue()) {
                 same++;
             }
         }
-        System.out.println("TOTAL INSTANCES: " + total);
-        System.out.println("CORRECTLY PREDICTED: " + same);
-        System.out.println("ACCURACY: " + (double) same / total);
     }
 
     public Instances getFilteredInstances() {
@@ -168,7 +173,7 @@ public class ANN extends AbstractClassifier implements CapabilitiesHandler {
         for (int i = 0; i < instance.numAttributes(); i++) {
             if (i != instance.classIndex()) {
                 layer.getNeurons().get(j).setValue(instance.value(i));
-                System.out.println(layer.getNeurons().get(j).getName() + " = " + layer.getNeurons().get(j).getValue());
+                //System.out.println(layer.getNeurons().get(j).getName() + " = " + layer.getNeurons().get(j).getValue());
                 j++;
             }
         }
@@ -180,11 +185,11 @@ public class ANN extends AbstractClassifier implements CapabilitiesHandler {
                 net = sumNet(n);
                 n.setValue(sigmoid(net));
 
-                System.out.println(n.getName() + " = " + n.getValue());
+                //System.out.println(n.getName() + " = " + n.getValue());
             }
         }
 
-        System.out.println();
+        //System.out.println();
     }
 
     private double checkError(Instance instance) {
@@ -197,18 +202,25 @@ public class ANN extends AbstractClassifier implements CapabilitiesHandler {
         //sum err output
         //System.out.println();
         //System.out.println(instance.stringValue(instance.classIndex()));
-        for (Neuron n : lastL.getNeurons()) {
-            if (n.getName() == instance.stringValue(instance.classIndex())) {
-                target = 1;
-            } else {
-                target = 0;
-            }
+        if (lastL.getNeurons().size() == 1) {
+            Neuron n = lastL.getNeurons().get(0);
+            target = instance.classValue();
             err = n.getValue() * (1 - n.getValue()) * (target - n.getValue());
             n.setError(err);
-            sumerr += err;
+            sumerr += abs(err);
+        } else {
+            for (Neuron n : lastL.getNeurons()) {
+                if (n.getName() == instance.stringValue(instance.classIndex())) {
+                    target = 1;
+                } else {
+                    target = 0;
+                }
+                err = n.getValue() * (1 - n.getValue()) * (target - n.getValue());
+                n.setError(err);
+                sumerr += abs(err);
+            }
         }
-
-        return abs(sumerr);
+        return sumerr;
     }
 
     private void backPropagate(Instance instance) {
@@ -259,13 +271,21 @@ public class ANN extends AbstractClassifier implements CapabilitiesHandler {
         Neuron max = lastL.getNeurons().get(0);
 
         feedForward(instance);
-        for (Neuron n : lastL.getNeurons()) {
-            if (n.getValue() > max.getValue()) {
-                max = n;
+        if (lastL.getNeurons().size() == 1) {
+            Neuron n = lastL.getNeurons().get(0);
+            if (n.getValue() < 0.5) {
+                return 0;
+            } else {
+                return 1;
             }
+        } else {
+            for (Neuron n : lastL.getNeurons()) {
+                if (n.getValue() > max.getValue()) {
+                    max = n;
+                }
+            }
+            return max.getNeuronNumber();
         }
-
-        return max.getNeuronNumber();
     }
 
     @Override
@@ -355,7 +375,24 @@ public class ANN extends AbstractClassifier implements CapabilitiesHandler {
             }
             Neuron biasNeuron = new Neuron(0, 1, "bias");
             for (Neuron nNext : next.getNeurons()) {
-                nNext.getPrev().add(new Link(biasNeuron, nNext, 1));
+                nNext.getPrev().add(new Link(biasNeuron, nNext, 0));
+            }
+        }
+    }
+
+    private void initializeWeights() {
+        Random rand = new Random();
+        rand.setSeed(123456);
+        for (Layer l : layers) {
+            if (l.getLayerNumber() == 0) continue; // skip first layer
+            for (Neuron n : l.getNeurons()) {
+                double std = sqrt(2.0 / (l.getPreviousLayer().getNeurons().size() + l.getNeurons().size()));
+                for (Link link : n.getPrev()) {
+                    if (!link.equals("bias")) {
+                        double weight = rand.nextGaussian() * std;
+                        link.setWeight(weight);
+                    }
+                }
             }
         }
     }
