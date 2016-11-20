@@ -1,5 +1,6 @@
 package neuralnetwork;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,7 +8,7 @@ import java.util.List;
  * Created by ranggarmaste on 11/13/16.
  */
 
-public class Neuron {
+public class Neuron implements Serializable {
     private int neuronNumber;
     private double value;
     private double error;

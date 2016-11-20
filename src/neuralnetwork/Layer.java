@@ -1,11 +1,12 @@
 package neuralnetwork;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * Created by ranggarmaste on 11/13/16.
  */
-public class Layer {
+public class Layer implements Serializable {
     private List<Neuron> neurons;
     private int layerNumber;
     private Layer previousLayer;

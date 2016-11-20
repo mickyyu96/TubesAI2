@@ -1,10 +1,12 @@
 package neuralnetwork;
 
+import java.io.Serializable;
+
 /**
  * Created by ranggarmaste on 11/13/16.
  */
 
-public class Link {
+public class Link implements Serializable {
     private Neuron dest;
     private Neuron src;
     private double weight;

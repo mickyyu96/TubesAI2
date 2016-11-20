@@ -1,6 +1,7 @@
 import neuralnetwork.Layer;
 import neuralnetwork.Link;
 import neuralnetwork.Neuron;
+import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Classifier;
 import weka.core.*;
 import weka.core.converters.ConverterUtils;
@@ -15,7 +16,7 @@ import static java.lang.Math.abs;
  * Created by ranggarmaste on 11/13/16.
  */
 
-public class ANN implements Classifier, CapabilitiesHandler {
+public class ANN extends AbstractClassifier implements CapabilitiesHandler {
     private Instances m_Instances;
     private Instances filteredInstances;
     private Filter nomToBinFilter;
@@ -145,6 +146,10 @@ public class ANN implements Classifier, CapabilitiesHandler {
         System.out.println("ACCURACY: " + (double) same / total);
     }
 
+    public Instances getFilteredInstances() {
+        return filteredInstances;
+    }
+
     private double sumNet (Neuron neuron) {
         double net = 0;
         List<Link> link = neuron.getPrev();
@@ -261,11 +266,6 @@ public class ANN implements Classifier, CapabilitiesHandler {
         }
 
         return max.getNeuronNumber();
-    }
-
-    @Override
-    public double[] distributionForInstance(Instance instance) throws Exception {
-        return new double[0];
     }
 
     @Override
