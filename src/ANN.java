@@ -18,7 +18,8 @@ public class ANN implements Classifier, CapabilitiesHandler {
     private int hiddenNodes;
     private int totalLayers;
     private int maxIterations = 10; // default: 10
-    private double errorThreshold; // default: 0
+    private double errorThreshold = 0.0005; // default: 0
+    private double learningRate = 0.01;
     private List<Layer> layers;
 
     @Override
@@ -77,23 +78,34 @@ public class ANN implements Classifier, CapabilitiesHandler {
         connectNeurons();
 
         // Learning
-        feedForward(m_Instances.instance(0));
-        checkError(m_Instances.instance(0));
-        backPropagate(m_Instances.instance(0));
-        System.out.println();
+//        feedForward(m_Instances.instance(0));
+//        System.out.println(checkError(m_Instances.instance(0)));
+//        backPropagate(m_Instances.instance(0));
+//        System.out.println();
+        for (int i = 0; i < maxIterations; i++) {
+            Enumeration<Instance> enuins = m_Instances.enumerateInstances();
+            while (enuins.hasMoreElements()) {
+                Instance instance = enuins.nextElement();
+                feedForward(instance);
+                double err = checkError(instance);
+                //System.out.println("error = " + err);
+                if (abs(err - errorThreshold) <= 0.00001) {
+                    break;
+                } else {
+                    backPropagate(instance);
+                }
+            }
+        }
+
         debugPrint();
-//        for (int i = 0; i < maxIterations; i++) {
-//            Enumeration<Instance> enuins = m_Instances.enumerateInstances();
-//            while (enuins.hasMoreElements()) {
-//                Instance instance = enuins.nextElement();
-//                feedForward(instance);
-//                double err = checkError();
-//                if (err <= errorThreshold) {
-//                    break;
-//                } else {
-//                    backPropagate();
-//                }
-//            }
+        System.out.println();
+        System.out.println(classifyInstance(m_Instances.instance(0)));
+
+//        Enumeration<Instance> enuins = m_Instances.enumerateInstances();
+//        while (enuins.hasMoreElements()) {
+//            Instance ins = enuins.nextElement();
+//            int a = (int) classifyInstance(ins);
+//            System.out.println(a);
 //        }
     }
 
@@ -101,7 +113,7 @@ public class ANN implements Classifier, CapabilitiesHandler {
         double net = 0;
         List<Link> link = neuron.getPrev();
         for (Link l : link) {
-            net += l.getDest().getValue() * l.getWeight();
+            net += l.getSrc().getValue() * l.getWeight();
         }
         return net;
     }
@@ -122,7 +134,6 @@ public class ANN implements Classifier, CapabilitiesHandler {
 
         //next layer
         while (layer.getNextLayer() != null) {
-            System.out.println();
             layer = layer.getNextLayer();
             for (Neuron n : layer.getNeurons()) {
                 net = sumNet(n);
@@ -131,6 +142,8 @@ public class ANN implements Classifier, CapabilitiesHandler {
                 System.out.println(n.getName() + " = " + n.getValue());
             }
         }
+
+        System.out.println();
     }
 
     private double checkError(Instance instance) {
@@ -141,6 +154,8 @@ public class ANN implements Classifier, CapabilitiesHandler {
         double target;
 
         //sum err output
+        //System.out.println();
+        //System.out.println(instance.stringValue(instance.classIndex()));
         for (Neuron n : lastL.getNeurons()) {
             if (n.getName() == instance.stringValue(instance.classIndex())) {
                 target = 1;
@@ -163,13 +178,9 @@ public class ANN implements Classifier, CapabilitiesHandler {
         //update weight to output
         for (Neuron n : lastL.getNeurons()) {
             for (Link l : n.getPrev()) {
-                updateW =  l.getWeight() + n.getError() * l.getSrc().getValue();
+                updateW =  l.getWeight() + learningRate * n.getError() * l.getSrc().getValue();
                 l.setWeight(updateW);
             }
-        }
-
-        for (Neuron n : lastL.getNeurons()) {
-            System.out.println("Error = " + n.getError());
         }
 
         //count err if there is a hidden layer
@@ -184,7 +195,6 @@ public class ANN implements Classifier, CapabilitiesHandler {
                 //sum weight * err
                 for (Link l : n.getNext()) {
                     sigma += l.getWeight() * l.getDest().getError();
-                    System.out.println(l.getDest().getName());
                 }
 
                 err = n.getValue() * (1 - n.getValue()) * sigma;
@@ -194,19 +204,27 @@ public class ANN implements Classifier, CapabilitiesHandler {
             //update weight to hidden layer
             for (Neuron n : hiddenL.getNeurons()) {
                 for (Link l : n.getPrev()) {
-                    updateW = l.getWeight() + n.getError() * l.getSrc().getValue();
+                    updateW = l.getWeight() + learningRate * n.getError() * l.getSrc().getValue();
                     l.setWeight(updateW);
                 }
             }
-            System.out.println("Layer = " + hiddenL.getLayerNumber());
-            System.out.println(hiddenL.getNeurons().get(0).getError());
-            System.out.println(hiddenL.getNeurons().get(1).getError());
         }
     }
 
     @Override
     public double classifyInstance(Instance instance) throws Exception {
-        return 1.0;
+        int lastIdx = totalLayers-1;
+        Layer lastL = layers.get(lastIdx);
+        Neuron max = lastL.getNeurons().get(0);
+
+        feedForward(instance);
+        for (Neuron n : lastL.getNeurons()) {
+            if (n.getValue() > max.getValue()) {
+                max = n;
+            }
+        }
+
+        return max.getNeuronNumber();
     }
 
     @Override

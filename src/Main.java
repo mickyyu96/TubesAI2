@@ -18,7 +18,7 @@ public class Main {
             e.printStackTrace();
         }
 
-        System.out.println(data);
+        //System.out.println(data);
         /*** AWAL TEST. ENTAR HAPUS AJA ***/
         // Ambil instance
         Enumeration<Instance> enu = data.enumerateInstances();
