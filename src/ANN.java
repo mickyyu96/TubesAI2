@@ -299,8 +299,9 @@ public class ANN implements Classifier, CapabilitiesHandler {
                     nNext.getPrev().add(link);
                 }
             }
+            Neuron biasNeuron = new Neuron(0, 1, "bias");
             for (Neuron nNext : next.getNeurons()) {
-                nNext.getPrev().add(new Link(new Neuron(0, 1, "bias"), nNext, 1));
+                nNext.getPrev().add(new Link(biasNeuron, nNext, 1));
             }
         }
     }
