@@ -51,7 +51,7 @@ public class ANN implements Classifier, CapabilitiesHandler {
         // Filter nominal to numeric
         NominalToBinary nomToBin = new NominalToBinary();
         try {
-            nomToBin.setInputFormat(instances);
+            nomToBin.setInputFormat(filteredInstances);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -68,9 +68,10 @@ public class ANN implements Classifier, CapabilitiesHandler {
         int neuronCount = 0;
         Layer lIn = new Layer(layerCount);
         List<Neuron> neurons = new ArrayList<>();
-        Enumeration<Attribute> enu = instances.enumerateAttributes();
+        Enumeration<Attribute> enu = filteredInstances.enumerateAttributes();
         while (enu.hasMoreElements()) {
             Attribute attr = enu.nextElement();
+            System.out.println(attr.name());
             Neuron neuron = new Neuron(neuronCount, attr.name());
             neurons.add(neuron);
             neuronCount++;
@@ -96,7 +97,7 @@ public class ANN implements Classifier, CapabilitiesHandler {
         Layer lOut = new Layer(layerCount);
         neurons = new ArrayList<>();
         neuronCount = 0;
-        Enumeration<Object> classVal = instances.classAttribute().enumerateValues();
+        Enumeration<Object> classVal = filteredInstances.classAttribute().enumerateValues();
         while (classVal.hasMoreElements()) {
             String label = (String) classVal.nextElement();
             Neuron neuron = new Neuron(neuronCount, label);
