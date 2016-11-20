@@ -9,7 +9,7 @@ public class Link {
     private Neuron src;
     private double weight;
 
-    public Link (Neuron dest, Neuron src, double weight) {
+    public Link (Neuron src, Neuron dest, double weight) {
         this.src = src;
         this.dest = dest;
         this.weight = weight;
@@ -41,6 +41,6 @@ public class Link {
 
     @Override
     public String toString() {
-        return "Link: (" + dest.getName() + ") to (" + src.getName() + "), weight: " + weight;
+        return "Link: (" + src.getName() + ") to (" + dest.getName() + "), weight: " + weight;
     }
 }
