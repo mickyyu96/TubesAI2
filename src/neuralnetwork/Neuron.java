@@ -9,6 +9,7 @@ import java.util.List;
 public class Neuron {
     private int neuronNumber;
     private double value;
+    private double error;
     private String name;
     private List<Link> next;
     private List<Link> prev;
@@ -32,6 +33,8 @@ public class Neuron {
         return value;
     }
 
+    public double getError() { return error; }
+
     public String getName() {
         return name;
     }
@@ -51,6 +54,8 @@ public class Neuron {
     public void setValue(double value) {
         this.value = value;
     }
+
+    public void setError(double error) { this.error = error; }
 
     public void setName(String name) {
         this.name = name;

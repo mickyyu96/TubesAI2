@@ -7,6 +7,8 @@ import weka.core.converters.ConverterUtils;
 
 import java.util.*;
 
+import static java.lang.Math.abs;
+
 /**
  * Created by ranggarmaste on 11/13/16.
  */
@@ -76,6 +78,10 @@ public class ANN implements Classifier, CapabilitiesHandler {
 
         // Learning
         feedForward(m_Instances.instance(0));
+        checkError(m_Instances.instance(0));
+        backPropagate(m_Instances.instance(0));
+        System.out.println();
+        debugPrint();
 //        for (int i = 0; i < maxIterations; i++) {
 //            Enumeration<Instance> enuins = m_Instances.enumerateInstances();
 //            while (enuins.hasMoreElements()) {
@@ -106,17 +112,12 @@ public class ANN implements Classifier, CapabilitiesHandler {
 
         //assign input
         int j = 0;
-        System.out.println("Layer 0");
         for (int i = 0; i < instance.numAttributes(); i++) {
             if (i != instance.classIndex()) {
                 layer.getNeurons().get(j).setValue(instance.value(i));
                 System.out.println(layer.getNeurons().get(j).getName() + " = " + layer.getNeurons().get(j).getValue());
                 j++;
             }
-        }
-
-        if (layers.get(1) == null) {
-            System.out.println("test null");
         }
 
         //next layer
@@ -132,14 +133,75 @@ public class ANN implements Classifier, CapabilitiesHandler {
         }
     }
 
-    private double checkError() {
-        /** WRITE YOUR CODE HERE **/
-        return 0.0;
+    private double checkError(Instance instance) {
+        double err = 0.0;
+        double sumerr = 0.0;
+        int lastIdx = totalLayers - 1;
+        Layer lastL = layers.get(lastIdx);
+        double target;
+
+        //sum err output
+        for (Neuron n : lastL.getNeurons()) {
+            if (n.getName() == instance.stringValue(instance.classIndex())) {
+                target = 1;
+            } else {
+                target = 0;
+            }
+            err = n.getValue() * (1 - n.getValue()) * (target - n.getValue());
+            n.setError(err);
+            sumerr += err;
+        }
+
+        return abs(sumerr);
     }
 
-    private void backPropagate() {
-        /** WRITE YOUR CODE HERE **/
-        /** Jangan lupa: bias cuma bisa diaskses dari neuron.prev **/
+    private void backPropagate(Instance instance) {
+        int lastIdx = totalLayers - 1;
+        Layer lastL = layers.get(lastIdx);
+        double updateW;
+
+        //update weight to output
+        for (Neuron n : lastL.getNeurons()) {
+            for (Link l : n.getPrev()) {
+                updateW =  l.getWeight() + n.getError() * l.getSrc().getValue();
+                l.setWeight(updateW);
+            }
+        }
+
+        for (Neuron n : lastL.getNeurons()) {
+            System.out.println("Error = " + n.getError());
+        }
+
+        //count err if there is a hidden layer
+        if (totalLayers == 3) {
+            Layer hiddenL = lastL.getPreviousLayer();
+            double sigma;
+            double err;
+
+            //count err for hidden layer
+            for (Neuron n : hiddenL.getNeurons()) {
+                sigma = 0;
+                //sum weight * err
+                for (Link l : n.getNext()) {
+                    sigma += l.getWeight() * l.getDest().getError();
+                    System.out.println(l.getDest().getName());
+                }
+
+                err = n.getValue() * (1 - n.getValue()) * sigma;
+                n.setError(err);
+            }
+
+            //update weight to hidden layer
+            for (Neuron n : hiddenL.getNeurons()) {
+                for (Link l : n.getPrev()) {
+                    updateW = l.getWeight() + n.getError() * l.getSrc().getValue();
+                    l.setWeight(updateW);
+                }
+            }
+            System.out.println("Layer = " + hiddenL.getLayerNumber());
+            System.out.println(hiddenL.getNeurons().get(0).getError());
+            System.out.println(hiddenL.getNeurons().get(1).getError());
+        }
     }
 
     @Override
