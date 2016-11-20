@@ -38,7 +38,7 @@ public class Main {
         options[0] = "-H";
         options[1] = "2"; // no. of hidden nodes. Set to 0 if hidden layers isn't needed
         options[2] = "-I";
-        options[3] = "1000"; // max iterations/epochs
+        options[3] = "1000000"; // max iterations/epochs
         options[4] = "-E";
         options[5] = "0.1"; // error threshold
         try {

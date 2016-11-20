@@ -16,6 +16,7 @@ import static java.lang.Math.abs;
  */
 
 public class ANN implements Classifier, CapabilitiesHandler {
+    private final static double eps = 0.0000001;
     private Instances m_Instances;
     private Instances filteredInstances;
     private Filter nomToBinFilter;
@@ -23,7 +24,7 @@ public class ANN implements Classifier, CapabilitiesHandler {
     private int hiddenNodes;
     private int totalLayers;
     private int maxIterations = 10; // default: 10
-    private double errorThreshold = 0.0005; // default: 0
+    private double errorThreshold = 0.00005; // default: 0
     private double learningRate = 0.01;
     private List<Layer> layers;
 
@@ -111,6 +112,7 @@ public class ANN implements Classifier, CapabilitiesHandler {
         connectLayers();
         connectNeurons();
 
+        System.out.println(maxIterations);
         for (int i = 0; i < maxIterations; i++) {
             Enumeration<Instance> enuins = filteredInstances.enumerateInstances();
             while (enuins.hasMoreElements()) {
@@ -118,7 +120,7 @@ public class ANN implements Classifier, CapabilitiesHandler {
                 feedForward(instance);
                 double err = checkError(instance);
                 //System.out.println("error = " + err);
-                if (abs(err - errorThreshold) <= 0.00001) {
+                if (abs(err - errorThreshold) <= eps) {
                     break;
                 } else {
                     backPropagate(instance);
@@ -163,7 +165,7 @@ public class ANN implements Classifier, CapabilitiesHandler {
         for (int i = 0; i < instance.numAttributes(); i++) {
             if (i != instance.classIndex()) {
                 layer.getNeurons().get(j).setValue(instance.value(i));
-                System.out.println(layer.getNeurons().get(j).getName() + " = " + layer.getNeurons().get(j).getValue());
+                //System.out.println(layer.getNeurons().get(j).getName() + " = " + layer.getNeurons().get(j).getValue());
                 j++;
             }
         }
@@ -175,11 +177,11 @@ public class ANN implements Classifier, CapabilitiesHandler {
                 net = sumNet(n);
                 n.setValue(sigmoid(net));
 
-                System.out.println(n.getName() + " = " + n.getValue());
+                //System.out.println(n.getName() + " = " + n.getValue());
             }
         }
 
-        System.out.println();
+        //System.out.println();
     }
 
     private double checkError(Instance instance) {
@@ -192,15 +194,23 @@ public class ANN implements Classifier, CapabilitiesHandler {
         //sum err output
         //System.out.println();
         //System.out.println(instance.stringValue(instance.classIndex()));
-        for (Neuron n : lastL.getNeurons()) {
-            if (n.getName() == instance.stringValue(instance.classIndex())) {
-                target = 1;
-            } else {
-                target = 0;
-            }
+        if (lastL.getNeurons().size() == 1) {
+            Neuron n = lastL.getNeurons().get(0);
+            target = instance.classValue();
             err = n.getValue() * (1 - n.getValue()) * (target - n.getValue());
             n.setError(err);
             sumerr += err;
+        } else {
+            for (Neuron n : lastL.getNeurons()) {
+                if (n.getName() == instance.stringValue(instance.classIndex())) {
+                    target = 1;
+                } else {
+                    target = 0;
+                }
+                err = n.getValue() * (1 - n.getValue()) * (target - n.getValue());
+                n.setError(err);
+                sumerr += err;
+            }
         }
 
         return abs(sumerr);
@@ -254,13 +264,22 @@ public class ANN implements Classifier, CapabilitiesHandler {
         Neuron max = lastL.getNeurons().get(0);
 
         feedForward(instance);
-        for (Neuron n : lastL.getNeurons()) {
-            if (n.getValue() > max.getValue()) {
-                max = n;
+        if (lastL.getNeurons().size() == 1) {
+            Neuron n = lastL.getNeurons().get(0);
+            if (n.getValue() < 0.5) {
+                return 0;
+            } else {
+                return 1;
             }
-        }
+        } else {
+            for (Neuron n : lastL.getNeurons()) {
+                if (n.getValue() > max.getValue()) {
+                    max = n;
+                }
+            }
 
-        return max.getNeuronNumber();
+            return max.getNeuronNumber();
+        }
     }
 
     @Override
