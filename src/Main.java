@@ -38,13 +38,15 @@ public class Main {
         /*** AKHIR TEST ***/
 
         ANN ann = new ANN();
-        String[] options = new String[6];
+        String[] options = new String[8];
         options[0] = "-H";
         options[1] = "0"; // no. of hidden nodes. Set to 0 if hidden layers isn't needed
         options[2] = "-I";
-        options[3] = "1000"; // max iterations/epochs
+        options[3] = "2000"; // max iterations/epochs
         options[4] = "-E";
         options[5] = "0.1"; // error threshold
+        options[6] = "-L";
+        options[7] = "1.0"; // learning rate
         try {
             ann.setOptions(options);
         } catch (Exception e) {
@@ -68,7 +70,6 @@ public class Main {
         try {
             Object obj[] = SerializationHelper.readAll("ann.model");
             ann = (ANN) obj[0];
-            // Instances newins = (Instances) obj[1]; kayaknya ga perlu
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -85,6 +86,8 @@ public class Main {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        System.out.println();
         System.out.println("**** 10-Fold Cross Validation Evaluation ****");
         System.out.println(eval.toSummaryString("\nResults\n", false));;
         try {
@@ -93,6 +96,5 @@ public class Main {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        ann.debugPrint();
     }
 }

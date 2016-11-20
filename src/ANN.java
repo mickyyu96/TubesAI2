@@ -25,9 +25,9 @@ public class ANN extends AbstractClassifier implements CapabilitiesHandler {
     private Filter replaceFilter;
     private int hiddenNodes;
     private int totalLayers;
-    private int maxIterations = 10; // default: 10
-    private double errorThreshold = 0.00005; // default: 0.00005
-    private double learningRate = 0.01;
+    private int maxIterations = 1000;
+    private double errorThreshold = 0.00005;
+    private double learningRate = 0.5;
     private List<Layer> layers;
 
     @Override
@@ -306,6 +306,7 @@ public class ANN extends AbstractClassifier implements CapabilitiesHandler {
         newVector.addElement(new Option("\tUse 1 hidden layer and how many nodes.", "H", 1, "-H <no. of nodes>"));
         newVector.addElement(new Option("\tSpecify the max iterations/epochs of learning.", "I", 1, "-I <no. of max iterations>"));
         newVector.addElement(new Option("\tSpecify the error threshold of learning.", "E", 1, "-E <error threshold>"));
+        newVector.addElement(new Option("\tSpecify the learning rate.", "L", 1, "-L <learning rate>"));
         return newVector.elements();
     }
 
@@ -317,6 +318,8 @@ public class ANN extends AbstractClassifier implements CapabilitiesHandler {
         options.add("" + maxIterations);
         options.add("-E");
         options.add("" + errorThreshold);
+        options.add("-L");
+        options.add("" + learningRate);
         return (String[])options.toArray(new String[0]);
     }
 
@@ -344,6 +347,14 @@ public class ANN extends AbstractClassifier implements CapabilitiesHandler {
                 throw new Exception("Threshold cannot be negative.");
             }
             errorThreshold = threshold;
+        }
+        String learnString = Utils.getOption('L', options);
+        if (nodes.length() > 0) {
+            double learn = Double.parseDouble(learnString);
+            if (learn < 0) {
+                throw new Exception("Learning rate cannot be negative.");
+            }
+            learningRate = learn;
         }
     }
 
