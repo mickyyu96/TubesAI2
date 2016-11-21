@@ -22,31 +22,16 @@ public class Main {
             e.printStackTrace();
         }
 
-        // System.out.println(data);
-        /*** AWAL TEST. ENTAR HAPUS AJA ***/
-        // Ambil instance
-        Enumeration<Instance> enu = data.enumerateInstances();
-        while (enu.hasMoreElements()) {
-            Instance inst = enu.nextElement();
-            for (int i = 0; i < inst.numAttributes(); i++) {
-                if (i != inst.classIndex()) {
-                    double val = inst.value(i); // Dapat nilai atribut ke-i
-                }
-            }
-        }
-        // Mau ambil nama atribut
-        /*** AKHIR TEST ***/
-
         ANN ann = new ANN();
         String[] options = new String[8];
         options[0] = "-H";
         options[1] = "0"; // no. of hidden nodes. Set to 0 if hidden layers isn't needed
         options[2] = "-I";
-        options[3] = "2000"; // max iterations/epochs
+        options[3] = "100000"; // max iterations/epochs
         options[4] = "-E";
         options[5] = "0.1"; // error threshold
         options[6] = "-L";
-        options[7] = "1.0"; // learning rate
+        options[7] = "0.1"; // learning rate
         try {
             ann.setOptions(options);
         } catch (Exception e) {
@@ -59,6 +44,8 @@ public class Main {
             e.printStackTrace();
         }
 
+        System.out.println(data);
+        System.out.println(ann.getFilteredInstances());
         // Save Model
         try {
             SerializationHelper.write("ann.model", ann);
@@ -74,7 +61,7 @@ public class Main {
             e.printStackTrace();
         }
 
-        // EVALUATION
+        // K-FOLD EVALUATION
         Evaluation eval = null;
         try {
             eval = new Evaluation(ann.getFilteredInstances());
@@ -90,6 +77,27 @@ public class Main {
         System.out.println();
         System.out.println("**** 10-Fold Cross Validation Evaluation ****");
         System.out.println(eval.toSummaryString("\nResults\n", false));;
+        try {
+            System.out.println(eval.toClassDetailsString());
+            System.out.println(eval.toMatrixString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // FULL TRAINING SET
+        try {
+            eval = new Evaluation(ann.getFilteredInstances());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            eval.evaluateModel(ann, ann.getFilteredInstances());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        System.out.println("**** Full Training Set Evaluation ****");
+        System.out.println(eval.toSummaryString("\nResults\n", false));
         try {
             System.out.println(eval.toClassDetailsString());
             System.out.println(eval.toMatrixString());

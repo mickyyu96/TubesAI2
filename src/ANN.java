@@ -117,7 +117,7 @@ public class ANN extends AbstractClassifier implements CapabilitiesHandler {
         initializeWeights();
 
         for (int i = 0; i < maxIterations; i++) {
-            System.out.println("Iteration-" + i);
+            //System.out.println("Iteration-" + i);
             Enumeration<Instance> enuins = filteredInstances.enumerateInstances();
             while (enuins.hasMoreElements()) {
                 Instance instance = enuins.nextElement();
