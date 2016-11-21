@@ -46,7 +46,7 @@ public class ANN extends AbstractClassifier implements CapabilitiesHandler {
             }
             numericFilter.setInputFormat(instances);
             normalizeFilter = numericFilter;
-            filteredInstances = Filter.useFilter(instances, numericFilter);
+            filteredInstances = Filter.useFilter(filteredInstances, numericFilter);
         }
 
         // Filter nominal to binary
@@ -141,6 +141,9 @@ public class ANN extends AbstractClassifier implements CapabilitiesHandler {
                 Instance instance = enuins.nextElement();
                 feedForward(instance);
                 errorTotal += checkError(instance);
+            }
+            if (errorTotal < errorThreshold) {
+                break;
             }
         }
         //debugPrint();
