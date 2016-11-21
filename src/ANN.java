@@ -123,7 +123,7 @@ public class ANN extends AbstractClassifier implements CapabilitiesHandler {
         // Connect layers, neurons, and initialize weights
         connectLayers();
         connectNeurons();
-        initializeWeights();
+        //initializeWeights();
 
         for (int i = 0; i < maxIterations; i++) {
             System.out.println("Iteration-" + i);
@@ -240,14 +240,6 @@ public class ANN extends AbstractClassifier implements CapabilitiesHandler {
         Layer lastL = layers.get(lastIdx);
         double updateW;
 
-        //update weight to output
-        for (Neuron n : lastL.getNeurons()) {
-            for (Link l : n.getPrev()) {
-                updateW =  l.getWeight() + learningRate * n.getError() * l.getSrc().getValue();
-                l.setWeight(updateW);
-            }
-        }
-
         //count err if there is a hidden layer
         if (totalLayers == 3) {
             Layer hiddenL = lastL.getPreviousLayer();
@@ -272,6 +264,14 @@ public class ANN extends AbstractClassifier implements CapabilitiesHandler {
                     updateW = l.getWeight() + learningRate * n.getError() * l.getSrc().getValue();
                     l.setWeight(updateW);
                 }
+            }
+        }
+
+        //update weight to output
+        for (Neuron n : lastL.getNeurons()) {
+            for (Link l : n.getPrev()) {
+                updateW =  l.getWeight() + learningRate * n.getError() * l.getSrc().getValue();
+                l.setWeight(updateW);
             }
         }
     }
