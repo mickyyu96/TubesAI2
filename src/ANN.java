@@ -2,9 +2,7 @@ import neuralnetwork.Layer;
 import neuralnetwork.Link;
 import neuralnetwork.Neuron;
 import weka.classifiers.AbstractClassifier;
-import weka.classifiers.Classifier;
 import weka.core.*;
-import weka.core.converters.ConverterUtils;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.*;
 
@@ -20,6 +18,7 @@ import static java.lang.Math.sqrt;
 public class ANN extends AbstractClassifier implements CapabilitiesHandler {
     private Instances m_Instances;
     private Instances filteredInstances;
+    private String numericFilterType;
     private Filter nomToBinFilter;
     private Filter normalizeFilter;
     private Filter replaceFilter;
@@ -33,20 +32,30 @@ public class ANN extends AbstractClassifier implements CapabilitiesHandler {
     @Override
     public void buildClassifier(Instances instances) throws Exception {
         m_Instances = new Instances(instances);
+        filteredInstances = new Instances(instances);
         layers = new ArrayList<>();
         totalLayers = hiddenNodes == 0 ? 2 : 3;
 
         // Filter normalize
-        Normalize normalize = new Normalize();
-        normalize.setInputFormat(instances);
-        normalizeFilter = normalize;
-        filteredInstances = Filter.useFilter(instances, normalize);
+        if (!numericFilterType.equals("X")) {
+            Filter numericFilter = null;
+            if (numericFilterType.equals("N")) {
+                numericFilter = new Normalize();
+            } else if (numericFilterType.equals("S")) {
+                numericFilter = new Standardize();
+            }
+            numericFilter.setInputFormat(instances);
+            normalizeFilter = numericFilter;
+            filteredInstances = Filter.useFilter(instances, numericFilter);
+        }
 
-        // Filter nominal to numeric
+        // Filter nominal to binary
         NominalToBinary nomToBin = new NominalToBinary();
         nomToBin.setInputFormat(filteredInstances);
         nomToBinFilter = nomToBin;
         filteredInstances = Filter.useFilter(filteredInstances, nomToBin);
+
+        // Filter nominal to numeric
 
         // Replace missing values
         ReplaceMissingValues replaceMissing = new ReplaceMissingValues();
@@ -117,7 +126,7 @@ public class ANN extends AbstractClassifier implements CapabilitiesHandler {
         initializeWeights();
 
         for (int i = 0; i < maxIterations; i++) {
-            //System.out.println("Iteration-" + i);
+            System.out.println("Iteration-" + i);
             Enumeration<Instance> enuins = filteredInstances.enumerateInstances();
             while (enuins.hasMoreElements()) {
                 Instance instance = enuins.nextElement();
@@ -320,6 +329,8 @@ public class ANN extends AbstractClassifier implements CapabilitiesHandler {
         options.add("" + errorThreshold);
         options.add("-L");
         options.add("" + learningRate);
+        options.add("-F");
+        options.add("" + numericFilterType);
         return (String[])options.toArray(new String[0]);
     }
 
@@ -355,6 +366,13 @@ public class ANN extends AbstractClassifier implements CapabilitiesHandler {
                 throw new Exception("Learning rate cannot be negative.");
             }
             learningRate = learn;
+        }
+        String filter = Utils.getOption('F', options);
+        if (nodes.length() > 0) {
+            if (!filter.equals("N") && !filter.equals("S") && !filter.equals("X")) {
+                throw new Exception("Only options 'N', 'S', and 'X' are available.");
+            }
+            numericFilterType = filter;
         }
     }
 
