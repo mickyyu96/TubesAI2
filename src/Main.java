@@ -71,15 +71,15 @@ public class Main {
         double percent = 60; // Split test percentage
         String[] options = new String[10];
         options[0] = "-H";
-        options[1] = "26"; // no. of hidden nodes. Set to 0 if hidden layers isn't needed
+        options[1] = "0"; // no. of hidden nodes. Set to 0 if hidden layers isn't needed
         options[2] = "-I";
-        options[3] = "10000"; // max iterations/epochs
+        options[3] = "1000"; // max iterations/epochs
         options[4] = "-E";
         options[5] = "0"; // error threshold
         options[6] = "-L";
-        options[7] = "0.35"; // learning rate
+        options[7] = "0.8"; // learning rate
         options[8] = "-F";
-        options[9] = "N"; // S = Standardize, N = Normalize, X = No Filter
+        options[9] = "X"; // S = Standardize, N = Normalize, X = No Filter
 
         /*** END OF USER INPUT ***/
 
@@ -109,6 +109,5 @@ public class Main {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        ann.debugPrint();
     }
 }
