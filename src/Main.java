@@ -5,6 +5,11 @@ import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.SerializationHelper;
 import weka.core.converters.ConverterUtils;
+import weka.filters.Filter;
+import weka.filters.unsupervised.attribute.NominalToBinary;
+import weka.filters.unsupervised.attribute.Normalize;
+import weka.filters.unsupervised.attribute.ReplaceMissingValues;
+import weka.filters.unsupervised.attribute.Standardize;
 
 import java.util.Enumeration;
 import java.util.Random;
@@ -14,29 +19,29 @@ import java.util.StringJoiner;
  * Created by ranggarmaste on 11/16/16.
  */
 public class Main {
-    public static void evalKFold(ANN ann, int folds) throws Exception {
-        Evaluation eval = new Evaluation(ann.getFilteredInstances());
-        eval.crossValidateModel(ann, ann.getFilteredInstances(), 10, new Random(1));
+    public static void evalKFold(ANN ann, Instances data, int folds) throws Exception {
+        Evaluation eval = new Evaluation(data);
+        eval.crossValidateModel(ann, data, 10, new Random(1));
         System.out.println("**** " + folds + "-Fold Cross Validation Evaluation ****");
         System.out.println(eval.toSummaryString("\nResults\n", false));
         System.out.println(eval.toClassDetailsString());
         System.out.println(eval.toMatrixString());
     }
 
-    public static void evalDataTrain(ANN ann) throws Exception {
-        Evaluation eval = new Evaluation(ann.getFilteredInstances());
-        eval.evaluateModel(ann, ann.getFilteredInstances());
+    public static void evalDataTrain(ANN ann, Instances data) throws Exception {
+        Evaluation eval = new Evaluation(data);
+        eval.evaluateModel(ann, data);
         System.out.println("**** Full Training Set Evaluation ****");
         System.out.println(eval.toSummaryString("\nResults\n", false));
         System.out.println(eval.toClassDetailsString());
         System.out.println(eval.toMatrixString());
     }
 
-    public static void evalSplit(ANN ann, double trainPercent) throws Exception {
-        int trainSize = (int) Math.round(ann.getFilteredInstances().numInstances() * trainPercent / 100);
-        int testSize = ann.getFilteredInstances().numInstances() - trainSize;
-        Instances train = new Instances(ann.getFilteredInstances(), 0, trainSize);
-        Instances test = new Instances(ann.getFilteredInstances(), trainSize, testSize);
+    public static void evalSplit(ANN ann, Instances data, double trainPercent) throws Exception {
+        int trainSize = (int) Math.round(data.numInstances() * trainPercent / 100);
+        int testSize = data.numInstances() - trainSize;
+        Instances train = new Instances(data, 0, trainSize);
+        Instances test = new Instances(data, trainSize, testSize);
 
         Evaluation eval = new Evaluation(train);
         eval.evaluateModel(ann, test);
@@ -79,14 +84,45 @@ public class Main {
         options[6] = "-L";
         options[7] = "0.8"; // learning rate
         options[8] = "-F";
-        options[9] = "X"; // S = Standardize, N = Normalize, X = No Filter
+        options[9] = "N"; // S = Standardize, N = Normalize, X = No Filter
 
         /*** END OF USER INPUT ***/
+
+        /** FILTER **/
+        Instances filteredData = new Instances(data);
+        try {
+            // Filter normalize
+            String numericFilterType = options[9];
+            if (!numericFilterType.equals("X")) {
+                Filter numericFilter = null;
+                if (numericFilterType.equals("N")) {
+                    numericFilter = new Normalize();
+                } else if (numericFilterType.equals("S")) {
+                    numericFilter = new Standardize();
+                }
+                numericFilter.setInputFormat(data);
+                filteredData = Filter.useFilter(filteredData, numericFilter);
+            }
+
+            // Filter nominal to binary
+            NominalToBinary nomToBin = new NominalToBinary();
+            nomToBin.setInputFormat(filteredData);
+            filteredData = Filter.useFilter(filteredData, nomToBin);
+
+            // Filter nominal to numeric
+
+            // Replace missing values
+            ReplaceMissingValues replaceMissing = new ReplaceMissingValues();
+            replaceMissing.setInputFormat(filteredData);
+            filteredData = Filter.useFilter(filteredData, replaceMissing);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         // SET OPTIONS + BUILD CLASSIFIER
         try {
             ann.setOptions(options);
-            ann.buildClassifier(data);
+            ann.buildClassifier(filteredData);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -103,9 +139,9 @@ public class Main {
         // EVALUATIONS
         try {
             System.out.println();
-            evalKFold(ann, 10);
-            evalDataTrain(ann);
-            evalSplit(ann, 60);
+            evalKFold(ann, filteredData, 10);
+            evalDataTrain(ann, filteredData);
+            evalSplit(ann, filteredData, percent);
         } catch (Exception e) {
             e.printStackTrace();
         }

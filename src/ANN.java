@@ -36,33 +36,6 @@ public class ANN extends AbstractClassifier implements CapabilitiesHandler {
         layers = new ArrayList<>();
         totalLayers = hiddenNodes == 0 ? 2 : 3;
 
-        // Filter normalize
-        if (!numericFilterType.equals("X")) {
-            Filter numericFilter = null;
-            if (numericFilterType.equals("N")) {
-                numericFilter = new Normalize();
-            } else if (numericFilterType.equals("S")) {
-                numericFilter = new Standardize();
-            }
-            numericFilter.setInputFormat(instances);
-            normalizeFilter = numericFilter;
-            filteredInstances = Filter.useFilter(filteredInstances, numericFilter);
-        }
-
-        // Filter nominal to binary
-        NominalToBinary nomToBin = new NominalToBinary();
-        nomToBin.setInputFormat(filteredInstances);
-        nomToBinFilter = nomToBin;
-        filteredInstances = Filter.useFilter(filteredInstances, nomToBin);
-
-        // Filter nominal to numeric
-
-        // Replace missing values
-        ReplaceMissingValues replaceMissing = new ReplaceMissingValues();
-        replaceMissing.setInputFormat(filteredInstances);
-        replaceFilter = replaceMissing;
-        filteredInstances = Filter.useFilter(filteredInstances, replaceMissing);
-
         // Create input layer
         int layerCount = 0;
         int neuronCount = 0;
@@ -407,7 +380,7 @@ public class ANN extends AbstractClassifier implements CapabilitiesHandler {
             }
             Neuron biasNeuron = new Neuron(0, 1, "bias");
             for (Neuron nNext : next.getNeurons()) {
-                nNext.getPrev().add(new Link(biasNeuron, nNext, 0));
+                nNext.getPrev().add(new Link(biasNeuron, nNext, 1));
             }
         }
     }
