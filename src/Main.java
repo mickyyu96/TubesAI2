@@ -60,15 +60,15 @@ public class Main {
     }
 
     public static Classifier loadModel(String filename) throws Exception {
-        Object obj[] = SerializationHelper.readAll("ann.model");
+        Object obj[] = SerializationHelper.readAll(filename);
         return (Classifier) obj[0];
     }
 
     public static void main(String[] args) {
         Instances data = null;
         try {
-            data = ConverterUtils.DataSource.read("data/Team.arff");
-            data.setClassIndex(data.numAttributes() - 1);
+            data = ConverterUtils.DataSource.read("data/mush.arff");
+            data.setClassIndex(0);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -146,17 +146,18 @@ public class Main {
         // EVALUATIONS
         Instances testSet = null;
         try {
-            testSet = ConverterUtils.DataSource.read("data/Team_test.arff");
-            testSet.setClassIndex(testSet.numAttributes() - 1);
-            Filter.useFilter(testSet, numericFilter);
-            Filter.useFilter(testSet, nomToBin);
-            Filter.useFilter(testSet, replaceMissing);
+            testSet = ConverterUtils.DataSource.read("data/mush_test.arff");
+            testSet.setClassIndex(0);
+            testSet = Filter.useFilter(testSet, numericFilter);
+            testSet = Filter.useFilter(testSet, nomToBin);
+            testSet = Filter.useFilter(testSet, replaceMissing);
         } catch (Exception e) {
             e.printStackTrace();
         }
+        System.out.println(testSet);
         try {
             System.out.println();
-            evalKFold(ann, filteredData, 10);
+            //evalKFold(ann, filteredData, 10);
             evalDataTrain(ann, filteredData, "train");
             //evalSplit(ann, filteredData, percent);
             evalDataTrain(ann, testSet, "test");
