@@ -96,7 +96,7 @@ public class ANN extends AbstractClassifier implements CapabilitiesHandler {
         // Connect layers, neurons, and initialize weights
         connectLayers();
         connectNeurons();
-        //initializeWeights();
+        initializeWeights();
 
         for (int i = 0; i < maxIterations; i++) {
             System.out.println("Iteration-" + i);
@@ -380,7 +380,7 @@ public class ANN extends AbstractClassifier implements CapabilitiesHandler {
             }
             Neuron biasNeuron = new Neuron(0, 1, "bias");
             for (Neuron nNext : next.getNeurons()) {
-                nNext.getPrev().add(new Link(biasNeuron, nNext, 1));
+                nNext.getPrev().add(new Link(biasNeuron, nNext, 0));
             }
         }
     }

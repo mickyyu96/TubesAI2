@@ -28,10 +28,14 @@ public class Main {
         System.out.println(eval.toMatrixString());
     }
 
-    public static void evalDataTrain(ANN ann, Instances data) throws Exception {
+    public static void evalDataTrain(ANN ann, Instances data, String title) throws Exception {
         Evaluation eval = new Evaluation(data);
         eval.evaluateModel(ann, data);
-        System.out.println("**** Full Training Set Evaluation ****");
+        if (title.equals("train")) {
+            System.out.println("**** Full Training Set Evaluation ****");
+        } else {
+            System.out.println("**** Test Set Evaluation ****");
+        }
         System.out.println(eval.toSummaryString("\nResults\n", false));
         System.out.println(eval.toClassDetailsString());
         System.out.println(eval.toMatrixString());
@@ -76,13 +80,13 @@ public class Main {
         double percent = 60; // Split test percentage
         String[] options = new String[10];
         options[0] = "-H";
-        options[1] = "0"; // no. of hidden nodes. Set to 0 if hidden layers isn't needed
+        options[1] = "25"; // no. of hidden nodes. Set to 0 if hidden layers isn't needed
         options[2] = "-I";
-        options[3] = "1000"; // max iterations/epochs
+        options[3] = "100"; // max iterations/epochs
         options[4] = "-E";
         options[5] = "0"; // error threshold
         options[6] = "-L";
-        options[7] = "0.8"; // learning rate
+        options[7] = "1"; // learning rate
         options[8] = "-F";
         options[9] = "N"; // S = Standardize, N = Normalize, X = No Filter
 
@@ -90,11 +94,14 @@ public class Main {
 
         /** FILTER **/
         Instances filteredData = new Instances(data);
+        NominalToBinary nomToBin = null;
+        Filter numericFilter = null;
+        ReplaceMissingValues replaceMissing = null;
         try {
             // Filter normalize
             String numericFilterType = options[9];
             if (!numericFilterType.equals("X")) {
-                Filter numericFilter = null;
+
                 if (numericFilterType.equals("N")) {
                     numericFilter = new Normalize();
                 } else if (numericFilterType.equals("S")) {
@@ -105,14 +112,14 @@ public class Main {
             }
 
             // Filter nominal to binary
-            NominalToBinary nomToBin = new NominalToBinary();
+            nomToBin = new NominalToBinary();
             nomToBin.setInputFormat(filteredData);
             filteredData = Filter.useFilter(filteredData, nomToBin);
 
             // Filter nominal to numeric
 
             // Replace missing values
-            ReplaceMissingValues replaceMissing = new ReplaceMissingValues();
+            replaceMissing = new ReplaceMissingValues();
             replaceMissing.setInputFormat(filteredData);
             filteredData = Filter.useFilter(filteredData, replaceMissing);
         } catch (Exception e) {
@@ -137,11 +144,22 @@ public class Main {
         }
 
         // EVALUATIONS
+        Instances testSet = null;
+        try {
+            testSet = ConverterUtils.DataSource.read("data/Team_test.arff");
+            testSet.setClassIndex(testSet.numAttributes() - 1);
+            Filter.useFilter(testSet, numericFilter);
+            Filter.useFilter(testSet, nomToBin);
+            Filter.useFilter(testSet, replaceMissing);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         try {
             System.out.println();
             evalKFold(ann, filteredData, 10);
-            evalDataTrain(ann, filteredData);
-            evalSplit(ann, filteredData, percent);
+            evalDataTrain(ann, filteredData, "train");
+            //evalSplit(ann, filteredData, percent);
+            evalDataTrain(ann, testSet, "test");
         } catch (Exception e) {
             e.printStackTrace();
         }
