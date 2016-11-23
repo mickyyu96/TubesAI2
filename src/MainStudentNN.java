@@ -1,10 +1,8 @@
 import weka.core.Instances;
 import weka.core.converters.ConverterUtils;
 import weka.filters.Filter;
-import weka.filters.unsupervised.attribute.NominalToBinary;
-import weka.filters.unsupervised.attribute.Normalize;
-import weka.filters.unsupervised.attribute.ReplaceMissingValues;
-import weka.filters.unsupervised.attribute.Standardize;
+import weka.filters.unsupervised.attribute.*;
+
 import java.util.Scanner;
 
 /**
@@ -24,17 +22,16 @@ public class MainStudentNN {
         System.out.println();
         System.out.print("> ");
         int input = sc.nextInt();
-        int classIndex = 0;
+        String deletedClassIndex = null;
         if (input == 1 || input == 3) {
-            classIndex = 26;
+            deletedClassIndex = "28";
         } else if (input == 2 || input == 4) {
-            classIndex = 27;
+            deletedClassIndex = "27";
         }
 
         Instances data = null;
         try {
             data = ConverterUtils.DataSource.read("data/student-train.arff");
-            data.setClassIndex(classIndex);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -54,11 +51,12 @@ public class MainStudentNN {
         options[6] = "-L";
         options[7] = "0.2"; // learning rate
         options[8] = "-F";
-        options[9] = "N"; // S = Standardize, N = Normalize, X = No Filter
+        options[9] = "N";
 
         /*** END OF USER INPUT ***/
 
         /** FILTER **/
+        Remove remove = null;
         Instances filteredData = new Instances(data);
         NominalToBinary nomToBin = null;
         Filter numericFilter = null;
@@ -76,12 +74,22 @@ public class MainStudentNN {
                 filteredData = Filter.useFilter(filteredData, numericFilter);
             }
 
+            // Filter remove
+            remove = new Remove();
+            String[] removeOptions = new String[2];
+            removeOptions[0] = "-R"; // "range"
+            removeOptions[1] = deletedClassIndex;
+            remove.setOptions(removeOptions);
+            remove.setInputFormat(filteredData);
+            filteredData = Filter.useFilter(filteredData, remove);
+
+            // Set class index
+            filteredData.setClassIndex(26);
+
             // Filter nominal to binary
             nomToBin = new NominalToBinary();
             nomToBin.setInputFormat(filteredData);
             filteredData = Filter.useFilter(filteredData, nomToBin);
-
-            // Filter nominal to numeric
 
             // Replace missing values
             replaceMissing = new ReplaceMissingValues();
@@ -117,8 +125,11 @@ public class MainStudentNN {
         Instances testSet = null;
         try {
             testSet = ConverterUtils.DataSource.read("data/student-mat-test.arff");
-            testSet.setClassIndex(classIndex);
-            testSet = Filter.useFilter(testSet, numericFilter);
+            if (numericFilter != null) {
+                testSet = Filter.useFilter(testSet, numericFilter);
+            }
+            testSet = Filter.useFilter(testSet, remove);
+            testSet.setClassIndex(26);
             testSet = Filter.useFilter(testSet, nomToBin);
             testSet = Filter.useFilter(testSet, replaceMissing);
         } catch (Exception e) {
